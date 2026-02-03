@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param } from '@nestjs/common';
 import { SniperService } from './sniper.service';
 import { CreateSniperRequestDto } from './dto/create-sniper-request.dto';
 
@@ -14,5 +14,10 @@ export class SniperController {
     @Get()
     findAll() {
         return this.sniperService.findAll();
+    }
+
+    @Get('user/:userId')
+    findByUser(@Param('userId') userId: string) {
+        return this.sniperService.findByUser(userId);
     }
 }

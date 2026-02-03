@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsNotEmpty } from 'class-validator';
+import { IsString, IsNumber, IsNotEmpty, Min, IsInt } from 'class-validator';
 
 export class CreateSniperRequestDto {
     @IsString()
@@ -6,14 +6,18 @@ export class CreateSniperRequestDto {
     rawTx: string;
 
     @IsNumber()
-    @IsNotEmpty()
+    @Min(0.1)
     targetGwei: number;
 
-    @IsNumber()
+    @IsInt()
     @IsNotEmpty()
     chainId: number;
 
     @IsString()
     @IsNotEmpty()
     userId: string;
+
+    @IsInt()
+    @Min(0)
+    nonce: number;
 }
