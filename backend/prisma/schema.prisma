@@ -14,14 +14,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum OrderStatus {
+  PENDING // Order received, waiting for gas condition
+  BROADCASTED // Transaction sent to mempool, awaiting confirmation
+  EXECUTED // Transaction confirmed on-chain
+  FAILED // Broadcasting or execution failed
+  CANCELLED // User cancelled (nonce used elsewhere)
+}
+
 model SniperRequest {
-  id         String   @id @default(uuid())
-  userId     String
-  chainId    Int
-  rawTx      String
-  targetGwei Float
-  status     String   @default("PENDING")
-  txHash     String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id         String      @id @default(uuid())
+  userId     String // Wallet address of the user
+  chainId    Int // e.g., 1 for Mainnet, 11155111 for Sepolia
+  rawTx      String // The signed raw transaction hex
+  targetGwei Float // Target base fee in Gwei
+  nonce      Int // The nonce used in the signed tx
+  status     OrderStatus @default(PENDING)
+  txHash     String? // Transaction hash after broadcast
+  error      String? // Error message if status is FAILED
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([status])
+  @@index([userId])
 }
