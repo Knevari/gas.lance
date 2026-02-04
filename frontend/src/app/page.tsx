@@ -6,9 +6,6 @@ export default function Home() {
     <main>
       <Navbar />
       <Hero />
-      <div style={{ height: "100vh" }}>
-        {/* Placeholder for Features/Pricing to verify scroll effect */}
-      </div>
     </main>
   );
 }

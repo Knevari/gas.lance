@@ -5,7 +5,7 @@ import { motion, HTMLMotionProps } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: "primary" | "outline" | "ghost" | "secondary";
+    variant?: "primary" | "outline" | "ghost" | "secondary" | "white";
     size?: "sm" | "md" | "lg";
     fullWidth?: boolean;
     loading?: boolean;
