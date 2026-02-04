@@ -1,22 +1,57 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { PrismaService } from './prisma/prisma.service';
 
 describe('AppController', () => {
-  let appController: AppController;
+  let controller: AppController;
+  let prismaService: jest.Mocked<PrismaService>;
 
   beforeEach(async () => {
-    const app: TestingModule = await Test.createTestingModule({
+    const mockPrisma = {
+      $queryRaw: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [AppService],
+      providers: [
+        {
+          provide: PrismaService,
+          useValue: mockPrisma,
+        },
+      ],
     }).compile();
 
-    appController = app.get<AppController>(AppController);
+    controller = module.get<AppController>(AppController);
+    prismaService = module.get(PrismaService);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+  describe('health', () => {
+    it('should return healthy status when database is connected', async () => {
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValue([{ '?column?': 1 }]);
+
+      const result = await controller.health();
+
+      expect(result.status).toBe('ok');
+      expect(result.version).toBe('1.0.0');
+      expect(result.services.database).toBe('ok');
+      expect(result.timestamp).toBeDefined();
+    });
+
+    it('should return database error status when DB query fails', async () => {
+      (prismaService.$queryRaw as jest.Mock).mockRejectedValue(new Error('Connection failed'));
+
+      const result = await controller.health();
+
+      expect(result.status).toBe('ok'); // API is still ok
+      expect(result.services.database).toBe('error');
+    });
+
+    it('should include timestamp in ISO format', async () => {
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValue([{ '?column?': 1 }]);
+
+      const result = await controller.health();
+
+      expect(result.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
     });
   });
 });
