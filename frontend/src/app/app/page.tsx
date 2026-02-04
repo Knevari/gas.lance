@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { DeployContractForm } from "@/components/forms/DeployContractForm";
 import { SniperForm } from "@/components/forms/SniperForm";
+import { OrdersList } from "@/components/dashboard/OrdersList";
 import { motion } from "framer-motion";
 import { Rocket, Code } from "lucide-react";
 
@@ -37,8 +38,8 @@ export default function Dashboard() {
                             <button
                                 onClick={() => setMode("deploy")}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${mode === "deploy"
-                                        ? "bg-violet-600 text-white"
-                                        : "bg-neutral-800 text-neutral-400 hover:text-white"
+                                    ? "bg-violet-600 text-white"
+                                    : "bg-neutral-800 text-neutral-400 hover:text-white"
                                     }`}
                             >
                                 <Rocket size={16} />
@@ -47,8 +48,8 @@ export default function Dashboard() {
                             <button
                                 onClick={() => setMode("advanced")}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${mode === "advanced"
-                                        ? "bg-violet-600 text-white"
-                                        : "bg-neutral-800 text-neutral-400 hover:text-white"
+                                    ? "bg-violet-600 text-white"
+                                    : "bg-neutral-800 text-neutral-400 hover:text-white"
                                     }`}
                             >
                                 <Code size={16} />
@@ -58,6 +59,9 @@ export default function Dashboard() {
 
                         {/* Form */}
                         {mode === "deploy" ? <DeployContractForm /> : <SniperForm />}
+
+                        {/* Orders List */}
+                        <OrdersList />
                     </div>
                 </motion.div>
             </div>

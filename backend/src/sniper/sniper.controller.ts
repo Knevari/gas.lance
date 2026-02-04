@@ -20,4 +20,9 @@ export class SniperController {
     findByUser(@Param('userId') userId: string) {
         return this.sniperService.findByUser(userId);
     }
+
+    @Get('credits/:userId')
+    getCredits(@Param('userId') userId: string) {
+        return this.sniperService.getCredits(userId);
+    }
 }

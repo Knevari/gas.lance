@@ -22,6 +22,15 @@ enum OrderStatus {
   CANCELLED // User cancelled (nonce used elsewhere)
 }
 
+model User {
+  id        String   @id // Wallet address (lowercase)
+  credits   Int      @default(1) // Free trial: 3 credits
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders SniperRequest[]
+}
+
 model SniperRequest {
   id         String      @id @default(uuid())
   userId     String // Wallet address of the user
@@ -32,8 +41,11 @@ model SniperRequest {
   status     OrderStatus @default(PENDING)
   txHash     String? // Transaction hash after broadcast
   error      String? // Error message if status is FAILED
+  feeCredits Int         @default(1) // Credits charged for this deployment
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
 
   @@index([status])
   @@index([userId])

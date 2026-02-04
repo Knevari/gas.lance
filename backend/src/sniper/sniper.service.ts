@@ -4,6 +4,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateSniperRequestDto } from './dto/create-sniper-request.dto';
 import { OrderStatus } from '../generated/client/enums';
 
+const CREDITS_PER_DEPLOYMENT = 1;
+const FREE_TRIAL_CREDITS = 3;
+
 @Injectable()
 export class SniperService {
     private readonly logger = new Logger(SniperService.name);
@@ -34,24 +37,61 @@ export class SniperService {
             throw new BadRequestException('Could not recover sender address from transaction');
         }
 
-        // Optional: Verify the sender matches the userId (wallet address)
+        // Verify the sender matches the userId (wallet address)
         if (sender.toLowerCase() !== dto.userId.toLowerCase()) {
             throw new BadRequestException(
                 `Sender address mismatch: transaction is signed by ${sender}, but userId is ${dto.userId}`,
             );
         }
 
+        const normalizedUserId = sender.toLowerCase();
         this.logger.log(`Validated tx from ${sender}, nonce: ${tx.nonce}, chainId: ${tx.chainId}`);
 
-        return this.prisma.sniperRequest.create({
-            data: {
-                rawTx: dto.rawTx,
-                targetGwei: dto.targetGwei,
-                chainId: dto.chainId,
-                userId: sender.toLowerCase(), // Normalize to lowercase
-                nonce: dto.nonce,
-                status: OrderStatus.PENDING,
-            },
+        // Get or create user with atomic transaction for credit deduction
+        return this.prisma.$transaction(async (prisma) => {
+            // Upsert user (create if not exists with free trial credits)
+            let user = await prisma.user.findUnique({
+                where: { id: normalizedUserId },
+            });
+
+            if (!user) {
+                user = await prisma.user.create({
+                    data: {
+                        id: normalizedUserId,
+                        credits: FREE_TRIAL_CREDITS,
+                    },
+                });
+                this.logger.log(`Created new user ${normalizedUserId} with ${FREE_TRIAL_CREDITS} free credits`);
+            }
+
+            // Check credit balance
+            if (user.credits < CREDITS_PER_DEPLOYMENT) {
+                throw new BadRequestException(
+                    `Insufficient credits. You have ${user.credits} credits, but need ${CREDITS_PER_DEPLOYMENT}. Please top up.`,
+                );
+            }
+
+            // Deduct credits
+            await prisma.user.update({
+                where: { id: normalizedUserId },
+                data: { credits: { decrement: CREDITS_PER_DEPLOYMENT } },
+            });
+
+            // Create the sniper request
+            const request = await prisma.sniperRequest.create({
+                data: {
+                    rawTx: dto.rawTx,
+                    targetGwei: dto.targetGwei,
+                    chainId: dto.chainId,
+                    userId: normalizedUserId,
+                    nonce: dto.nonce,
+                    status: OrderStatus.PENDING,
+                    feeCredits: CREDITS_PER_DEPLOYMENT,
+                },
+            });
+
+            this.logger.log(`Deducted ${CREDITS_PER_DEPLOYMENT} credit(s) from user ${normalizedUserId}`);
+            return request;
         });
     }
 
@@ -64,5 +104,12 @@ export class SniperService {
             where: { userId: userId.toLowerCase() },
             orderBy: { createdAt: 'desc' },
         });
+    }
+
+    async getCredits(userId: string) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId.toLowerCase() },
+        });
+        return { credits: user?.credits ?? FREE_TRIAL_CREDITS };
     }
 }
