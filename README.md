@@ -1,98 +1,135 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# GasLance - Gas Price Sniper for Smart Contract Deployments
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Deploy your smart contracts when gas prices drop. GasLance monitors network gas prices 24/7 and broadcasts your pre-signed transactions automatically.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🚀 Quick Start (Development)
 
-## Description
+### Prerequisites
+- Node.js 20+
+- Docker & Docker Compose
+- An Ethereum RPC provider (Alchemy, Infura, or Ankr)
+- Stripe account for payments
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+### 1. Clone and Setup
 
 ```bash
-$ pnpm install
+# Clone the repository
+git clone <repo-url>
+cd gaslance-api
+
+# Start PostgreSQL database
+docker compose -f docker-compose.dev.yml up -d
+
+# Setup backend
+cd backend
+cp .env.example .env
+# Edit .env with your API keys
+npm install
+npx prisma migrate dev
+npm run start:dev
+
+# Setup frontend (new terminal)
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
 ```
 
-## Compile and run the project
+### 2. Environment Variables
+
+**Backend (.env)**
+```
+DATABASE_URL=postgresql://gaslance:gaslance_dev_password@localhost:5432/gaslance
+PORT=3001
+FRONTEND_URL=http://localhost:3000
+MAINNET_RPC_URL=https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY
+SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_KEY
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+```
+
+### 3. Stripe Webhook Setup (Development)
 
 ```bash
-# development
-$ pnpm run start
+# Install Stripe CLI
+stripe listen --forward-to localhost:3001/payment/webhook
 
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+# Copy the webhook secret (whsec_xxx) to your .env
 ```
 
-## Run tests
+## 🐳 Docker Deployment (Production)
+
+### Full Stack Deployment
 
 ```bash
-# unit tests
-$ pnpm run test
+# Set environment variables
+export MAINNET_RPC_URL=your_url
+export SEPOLIA_RPC_URL=your_url
+export STRIPE_SECRET_KEY=sk_live_xxx
+export STRIPE_WEBHOOK_SECRET=whsec_xxx
 
-# e2e tests
-$ pnpm run test:e2e
+# Build and run all services
+docker compose up -d --build
 
-# test coverage
-$ pnpm run test:cov
+# Run migrations (first time only)
+docker compose exec backend npx prisma migrate deploy
 ```
 
-## Deployment
+### Services
+| Service | Port | Description |
+|---------|------|-------------|
+| frontend | 3000 | Next.js web app |
+| backend | 3001 | NestJS API |
+| postgres | 5432 | PostgreSQL database |
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## 📁 Project Structure
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+```
+gaslance-api/
+├── backend/                 # NestJS API
+│   ├── src/
+│   │   ├── sniper/          # Order management
+│   │   ├── watcher/         # Gas monitoring & broadcasting
+│   │   ├── payment/         # Stripe integration
+│   │   └── prisma/          # Database service
+│   └── prisma/              # Schema & migrations
+├── frontend/                # Next.js app
+│   └── src/
+│       ├── app/             # Pages (Next.js App Router)
+│       └── components/      # React components
+├── docker-compose.yml       # Production deployment
+└── docker-compose.dev.yml   # Development (DB only)
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 🔧 API Endpoints
 
-## Resources
+### Sniper (Orders)
+- `POST /sniper` - Create new deployment order
+- `GET /sniper/user/:userId` - Get user's orders
+- `GET /sniper/credits/:userId` - Get user's credit balance
 
-Check out a few resources that may come in handy when working with NestJS:
+### Payments
+- `GET /payment/packages` - List credit packages
+- `POST /payment/checkout` - Create Stripe checkout session
+- `POST /payment/webhook` - Stripe webhook handler
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## 💰 Credit System
 
-## Support
+| Package | Credits | Price | Discount |
+|---------|---------|-------|----------|
+| Starter | 5 | $5 | — |
+| Pro | 15 | $12 | 20% |
+| Power | 50 | $35 | 30% |
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+New users get **1 free credit** to try the service.
 
-## Stay in touch
+## 🔒 Security Notes
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+- Transactions are pre-signed by users - we never hold private keys
+- All wallet addresses are normalized to lowercase
+- Stripe webhooks use signature verification
+- CORS is configured for frontend origin only
 
-## License
+## 📝 License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+MIT

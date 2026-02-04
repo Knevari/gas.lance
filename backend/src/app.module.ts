@@ -6,6 +6,7 @@ import { WatcherModule } from './watcher/watcher.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule } from '@nestjs/config';
 import { SniperModule } from './sniper/sniper.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { SniperModule } from './sniper/sniper.module';
     PrismaModule,
     WatcherModule,
     SniperModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

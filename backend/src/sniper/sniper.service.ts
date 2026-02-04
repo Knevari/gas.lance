@@ -5,7 +5,7 @@ import { CreateSniperRequestDto } from './dto/create-sniper-request.dto';
 import { OrderStatus } from '../generated/client/enums';
 
 const CREDITS_PER_DEPLOYMENT = 1;
-const FREE_TRIAL_CREDITS = 3;
+const FREE_TRIAL_CREDITS = 1;
 
 @Injectable()
 export class SniperService {

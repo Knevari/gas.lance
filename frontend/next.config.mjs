@@ -1,10 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    output: 'standalone', // Required for Docker deployment
     async rewrites() {
         return [
             {
                 source: '/api/:path*',
-                destination: 'http://localhost:3000/:path*',
+                destination: 'http://localhost:3001/:path*',
             },
         ];
     },

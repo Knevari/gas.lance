@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useAccount } from 'wagmi';
 import { Card } from "../ui/Card";
+import { BuyCreditsModal } from "../payment/BuyCreditsModal";
 import { Clock, CheckCircle2, XCircle, AlertTriangle, Radio, ExternalLink, Coins } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -71,6 +72,7 @@ export const OrdersList = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [credits, setCredits] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
+    const [showBuyModal, setShowBuyModal] = useState(false);
 
     useEffect(() => {
         if (!isConnected || !address) {
@@ -130,7 +132,10 @@ export const OrdersList = () => {
                         </p>
                     </div>
                 </div>
-                <button className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors">
+                <button
+                    onClick={() => setShowBuyModal(true)}
+                    className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors"
+                >
                     Buy Credits
                 </button>
             </div>
@@ -212,6 +217,12 @@ export const OrdersList = () => {
                     </div>
                 )}
             </div>
+
+            {/* Buy Credits Modal */}
+            <BuyCreditsModal
+                isOpen={showBuyModal}
+                onClose={() => setShowBuyModal(false)}
+            />
         </div>
     );
 };
